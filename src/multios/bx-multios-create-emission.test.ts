@@ -4,9 +4,9 @@ import { Trend } from 'k6/metrics';
 import http from 'k6/http';
 
 import urlencode from 'https://jslib.k6.io/form-urlencoded/3.0.0/index.js';
-import { AuthResponse } from './types/auth';
+import { AuthResponse } from '../types/auth';
 
-import { authDev } from '.';
+import { authUniversal, apikey } from '../auth';
 
 export const options = {
   // define thresholds
@@ -20,12 +20,12 @@ export const options = {
     average_load: {
       executor: 'ramping-vus',
       stages: [
-        // ramp up to average load of 20 virtual users
-        { duration: '1s', target: 5 },
+        // ramp up to average load of X virtual users
+        { duration: '5s', target: 1 },
         // maintain load
-        { duration: '8s', target: 5 },
+        { duration: '10s', target: 1 },
         // ramp down to zero
-        { duration: '1s', target: 0 },
+        { duration: '5s', target: 0 },
       ],
     },
   },
@@ -35,24 +35,33 @@ export const options = {
 const loginLatency = new Trend('group_login_duration');
 const createLatency = new Trend('group_create_emission_duration');
 
-const prdrEmissionBasePath =
-  'https://devapigw.bluex.cl/api/integration/multios/emission';
+const basePath = `${
+  __ENV.ENVIRONMENT === 'dev'
+    ? 'https://devapigw.bluex.cl'
+    : __ENV.ENVIRONMENT === 'qa'
+    ? 'https://qaapigw.bluex.cl'
+    : __ENV.ENVIRONMENT === 'prod'
+    ? 'https://apigw.bluex.cl'
+    : 'http://localhost:3000'
+}`;
 
 export default function () {
   group('MultiOS Unitary - Create Emission', function () {
+    // console.warn('ENVIRONMENT', __ENV.ENVIRONMENT);
+
     // login flow
     const loginRes = http.post(
-      authDev.url,
-      urlencode(authDev.credentials),
-      authDev.params
+      authUniversal(__ENV.ENVIRONMENT).url,
+      urlencode(authUniversal(__ENV.ENVIRONMENT).credentials),
+      authUniversal(__ENV.ENVIRONMENT).params
     );
     loginLatency.add(loginRes.timings.duration);
     check(loginRes, {
       'login universal 200': (res) => res.status == 200,
     });
 
+    // console.log(loginRes.body);
     const auth: AuthResponse = JSON.parse(String(loginRes.body));
-    // console.log(auth);
 
     const createPayload = {
       socketId: '742376a0-24ff-4fb5-bf03-fb6a52203517',
@@ -64,7 +73,7 @@ export default function () {
       },
       origin: {
         _id: '6419c86bc20a12d2befd24ce',
-        sender: 'Cristian AT asdasd',
+        sender: 'Cristian AT',
         rut: '7841838-9',
         phone: '9861933293',
         email: 'cristian.alarcon@blue.cl',
@@ -168,16 +177,17 @@ export default function () {
 
     // create emission flow
     const createRes = http.post(
-      `${prdrEmissionBasePath}/v1/emissions`,
+      `${basePath}/api/integration/multios/emission/v1/emissions`,
       JSON.stringify(createPayload),
       {
         headers: {
           'Content-Type': 'application/json',
           authorization: `Bearer ${auth.access_token}`,
-          apikey: authDev.params.headers.apikey,
+          apikey: apikey(__ENV.ENVIRONMENT),
         },
       }
     );
+    // console.log(createRes.body);
 
     // console.log(createRes);
     createLatency.add(createRes.timings.duration);

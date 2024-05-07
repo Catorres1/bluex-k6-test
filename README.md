@@ -1,6 +1,6 @@
 <div align="center">
   
-  ![banner](docs/ts-js-k6.png)
+![banner](docs/ts-js-k6.png)
 
 # Template to use TypeScript with k6
 
@@ -20,17 +20,15 @@ While it, of course, still is possible to shoot yourself in the foot with TypeSc
 - Improve readability and maintainability.
 - Allow you to drop a lot of the defensive code previously needed to make sure consumers are calling functions properly.
 
-
 ## Installation
 
 **Creating a project from the `template-typescript` template**
 
 To generate a TypeScript project that includes the dependencies and initial configuration, navigate to the [template-typescript](https://github.com/grafana/k6-template-typescript) page and click **Use this template**.
 
-  ![](docs/use-this-template-button.png)
+![](docs/use-this-template-button.png)
 
-
-**Install dependencies**
+## Install dependencies
 
 Clone the generated repository on your local machine, move to the project root folder and install the dependencies defined in [`package.json`](./package.json)
 
@@ -54,7 +52,7 @@ Once that is done, we can run our script the same way we usually do, for instanc
 k6 run dist/get-200-status-test.js
 ```
 
-**See also**
+## See also
 
 - [Using k6 / Modules](https://grafana.com/docs/k6/latest/using-k6/modules/)
 - [Using k6 / JavaScript compatibility mode](https://grafana.com/docs/k6/latest/using-k6/javascript-compatibility-mode/)
